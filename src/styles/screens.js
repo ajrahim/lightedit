@@ -3,32 +3,30 @@ import { StyleSheet } from "react-native";
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#333',
   },
   navBar: {
     flexDirection: 'row',
-    backgroundColor: '#333',
+    justifyContent: 'space-between',
     padding: 10,
-    justifyContent: 'space-around',
+    marginHorizontal: 20,
+    backgroundColor: '#333',
   },
   navButton: {
-    padding: 8,
-    backgroundColor: '#444',
-    borderRadius: 4,
+    padding: 10,
   },
   navButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#222',
-    padding: 10,
     justifyContent: 'space-around',
+    padding: 10,
+    backgroundColor: '#222',
   },
   tabButton: {
-    padding: 8,
+    padding: 10,
     borderRadius: 4,
   },
   activeTab: {
@@ -37,7 +35,6 @@ export default StyleSheet.create({
   tabButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
   },
   editorContainer: {
     flex: 1,
@@ -50,75 +47,78 @@ export default StyleSheet.create({
     borderRadius: 4,
   },
   footer: {
+    padding: 10,
     backgroundColor: '#222',
-    alignContent: 'center',
-    justifyContent: 'center',
-    height: 70,
     alignItems: 'center',
   },
   lastSavedText: {
     color: '#fff',
     fontSize: 14,
   },
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 10,
     padding: 20,
+    alignItems: 'center',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  modalContent: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
   closeButton: {
     padding: 10,
-    backgroundColor: '#444',
+    backgroundColor: '#333',
     borderRadius: 4,
-    alignSelf: 'center',
-    marginVertical: 10,
   },
   closeButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
   },
-  webview: {
+  modalOverlay: {
     flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
-  historyItem: {
-    padding: 10,
-    marginBottom: 8,
-    backgroundColor: '#ddd',
-    borderRadius: 4,
+  modalContainer: {
+    width: '100%',
+    backgroundColor: '#fff', // white background for the modal
+    padding: 20,
   },
-  historyText: {
-    fontSize: 14,
-    color: '#333',
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
   },
-  inputContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    padding: 10,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    zIndex: 1000,
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 4,
-  },
-  input: {
-    height: 40,
+  modalInput: {
+    borderColor: '#ccc',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 4,
-    paddingHorizontal: 8,
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+  },
+  modalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  modalButton: {
+    marginLeft: 10,
+    padding: 10,
+  },
+  modalButtonText: {
+    color: '#007BFF',
+    fontSize: 16,
   },
 });

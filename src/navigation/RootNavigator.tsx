@@ -4,6 +4,7 @@ import TabNavigator from './TabNavigator';
 import EditorScreen from '../features/EditorScreen';
 import HistoryScreen from '../features/HistoryScreen';
 import PreviewScreen from '../features/PreviewScreen';
+import LibraryScreen from '../features/LibraryScreen';
 
 const RootStack = createNativeStackNavigator();
 
@@ -42,6 +43,16 @@ const RootNavigator = () => {
         component={PreviewScreen}
         options={{
           title: 'Preview',
+          headerStyle: { backgroundColor: '#333' },
+          headerTintColor: '#fff',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <RootStack.Screen
+        name="Library"
+        component={LibraryScreen}
+        options={{
+          title: 'Library',
           headerStyle: { backgroundColor: '#333' },
           headerTintColor: '#fff',
           headerBackTitleVisible: false,

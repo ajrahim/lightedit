@@ -1,6 +1,5 @@
 import React, {
   useState,
-  useRef,
   useEffect,
   useCallback,
   createContext,
@@ -9,18 +8,19 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   saveVersion,
   selectLatestVersionByProjectId,
-  selectVersionsByProjectId,
 } from '../redux/saveSlice';
 import { useNavigation } from '@react-navigation/native';
 import {
   Text,
   TouchableOpacity,
   View,
-  Animated,
-  Keyboard,
+  Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import CodeEditor from '@rivascva/react-native-code-editor';
+import Icon from 'react-native-vector-icons/FontAwesome6';
 import styles from '../styles/screens';
 
 const EditorContext = createContext(null);
@@ -31,6 +31,7 @@ const EditorScreen = ({ route }) => {
   const { projectName } = route?.params || {};
   const projects = useSelector((state) => state.projects.projects);
   const project = projects.find((p) => p.name === projectName);
+  const [editorLanguage, setEditorLanguage] = useState('htmlbars')
 
   if (!project) {
     return <Text>Project not found</Text>;
@@ -48,52 +49,32 @@ const EditorScreen = ({ route }) => {
   });
   const [query, setQuery] = useState('');
   const [lastSaved, setLastSaved] = useState(null);
-  const [inputVisible, setInputVisible] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const inputAnimation = useRef(new Animated.Value(0)).current;
-  const codeRef = useRef(null);
+  const [helpVisible, setHelpVisible] = useState(false);
+  const [queryVisible, setQueryVisible] = useState(false);
 
   useEffect(() => {
     if (latestVersion) {
-      setContent({
-        html: latestVersion.html || '<h1>Hello World</h1>',
-        css: latestVersion.css || 'body {\n  font-family: Arial;\n}',
-        js: latestVersion.js || 'console.log("Hello World");',
-      });
+      setContent((prevContent) => ({
+        html: latestVersion.html || prevContent.html,
+        css: latestVersion.css || prevContent.css,
+        js: latestVersion.js || prevContent.js,
+      }));
       setLastSaved(latestVersion.timestamp);
     }
   }, [latestVersion]);
 
   useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      (e) => {
-        setKeyboardHeight(e.endCoordinates.height);
-        Animated.timing(inputAnimation, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }
-    );
-
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setInputVisible(false);
-        Animated.timing(inputAnimation, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }
-    );
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, [inputAnimation]);
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          style={{ marginRight: 10 }}
+          onPress={() => setHelpVisible(true)}
+        >
+          <Text style={{ color: '#fff', fontSize: 16 }}>Help</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
   const handleContentChange = useCallback(
     (newValue) => {
@@ -117,6 +98,12 @@ const EditorScreen = ({ route }) => {
     alert('Project saved!');
   };
 
+  const handleLibraryPress = () => {
+    navigation.navigate('Library', {
+      projectId: project.id
+    });
+  };
+
   const handleHistoryPress = () => {
     navigation.navigate('History', {
       projectId: project.id,
@@ -131,7 +118,7 @@ const EditorScreen = ({ route }) => {
   };
 
   const handleQueryPress = () => {
-    setInputVisible(true);
+    setQueryVisible(true);
   };
 
   const handlePreviewPress = () => {
@@ -158,52 +145,30 @@ const EditorScreen = ({ route }) => {
         {/* Navigation Bar */}
         <View style={styles.navBar}>
           <TouchableOpacity style={styles.navButton} onPress={handleQueryPress}>
-            <Text style={styles.navButtonText}>Q</Text>
+            <Icon name="bolt-lightning" size={20} color="#999" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={handleLibraryPress}
+          >
+            <Icon name="book" size={20} color="#999" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.navButton} onPress={handleSavePress}>
-            <Text style={styles.navButtonText}>S</Text>
+            <Icon name="floppy-disk" size={20} color="#999" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.navButton}
             onPress={handleHistoryPress}
           >
-            <Text style={styles.navButtonText}>H</Text>
+            <Icon name="clock-rotate-left" size={20} color="#999" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.navButton}
             onPress={handlePreviewPress}
           >
-            <Text style={styles.navButtonText}>P</Text>
+            <Icon name="play" size={20} color="#999" />
           </TouchableOpacity>
         </View>
-
-        {/* Input Field */}
-        {inputVisible && (
-          <Animated.View
-            style={[
-              styles.inputContainer,
-              {
-                transform: [
-                  {
-                    translateY: inputAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [100, -keyboardHeight],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <Text style={styles.inputLabel}>AI Query</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your AI query here..."
-              placeholderTextColor="#aaa"
-              value={query}
-              onChangeText={setQuery}
-            />
-          </Animated.View>
-        )}
 
         {/* Tabs */}
         <View style={styles.tabContainer}>
@@ -226,9 +191,9 @@ const EditorScreen = ({ route }) => {
         {/* Code Editor */}
         <View style={styles.editorContainer}>
           <CodeEditor
-            ref={codeRef}
-            value={content[activeTab.toLowerCase()]}
-            language={activeTab.toLowerCase()}
+            key={activeTab}
+            initialValue={content[activeTab.toLowerCase()]}
+            language={editorLanguage}
             onChange={handleContentChange}
             theme="dark"
             style={styles.codeEditor}
@@ -246,6 +211,74 @@ const EditorScreen = ({ route }) => {
               : 'Not Yet Saved'}
           </Text>
         </View>
+
+        {/* Help Modal */}
+        <Modal
+          visible={helpVisible}
+          transparent={true}
+          onRequestClose={() => setHelpVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContainer}>
+              <Text style={styles.modalTitle}>Editor Help</Text>
+              <Text style={styles.modalContent}>
+                This is the help section for the editor. Include your detailed
+                documentation or tips here.
+              </Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setHelpVisible(false)}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Query Modal */}
+        <Modal
+          visible={queryVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setQueryVisible(false)}
+        >
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            enabled
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>AI Query</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Enter your AI query here..."
+                  placeholderTextColor="#aaa"
+                  value={query}
+                  onChangeText={setQuery}
+                  autoFocus
+                />
+                <View style={styles.modalButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={() => setQueryVisible(false)}
+                  >
+                    <Text style={styles.modalButtonText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={() => {
+                      // Handle the query submission here
+                      setQueryVisible(false);
+                    }}
+                  >
+                    <Text style={styles.modalButtonText}>Submit</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
       </View>
     </EditorContext.Provider>
   );

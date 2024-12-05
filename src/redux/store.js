@@ -3,6 +3,7 @@ import { combineReducers } from 'redux';
 import { persistStore, persistReducer } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import projectsReducer from './projectsSlice';
+import libraryReducer from './librarySlice';
 import saveReducer from './saveSlice';
 import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
 
@@ -13,7 +14,8 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
   projects: projectsReducer,
-  saves: saveReducer
+  saves: saveReducer,
+  libraries: libraryReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
