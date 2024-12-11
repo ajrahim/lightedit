@@ -1,11 +1,17 @@
-import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, Dimensions, PanResponder } from 'react-native';
+import React, { useState, useRef, useLayoutEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, Dimensions, PanResponder, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { useSelector } from 'react-redux';
+import { selectActiveProject } from '../redux/projectsSlice';
+import Icon from 'react-native-vector-icons/FontAwesome6';
+import styles from '../styles/screens';
 
-const PreviewScreen = ({ route }) => {
+const PreviewScreen = ({ route, navigation }) => {
   const { content } = route.params || {};
+  const activeProject = useSelector(selectActiveProject);
 
   const [consoleMessages, setConsoleMessages] = useState([]);
+  const [showConsole, setShowConsole] = useState(false);
   const scrollViewRef = useRef();
 
   const handleMessage = (event) => {
@@ -15,7 +21,9 @@ const PreviewScreen = ({ route }) => {
         setConsoleMessages((prevMessages) => [...prevMessages, data]);
         // Auto-scroll to the bottom
         setTimeout(() => {
-          scrollViewRef.current.scrollToEnd({ animated: true });
+          if (scrollViewRef.current) {
+            scrollViewRef.current.scrollToEnd({ animated: true });
+          }
         }, 100);
       }
     } catch (e) {
@@ -23,7 +31,11 @@ const PreviewScreen = ({ route }) => {
     }
   };
 
-  const wrapContentWithConsoleOverride = (htmlContent) => {
+  const wrapContentWithConsoleOverride = (htmlContent, libraries) => {
+    const libraryScripts = libraries
+      .map((library) => `<script>${library.code}</script>`)
+      .join('\n');
+
     const consoleOverrideScript = `
       <script>
         (function() {
@@ -57,10 +69,11 @@ const PreviewScreen = ({ route }) => {
       </script>
     `;
 
-    return htmlContent.replace(/<head>/i, `<head>${consoleOverrideScript}`);
+    return htmlContent.replace(/<head>/i, `<head>${consoleOverrideScript}\n${libraryScripts}`);
   };
 
-  const contentWithConsoleOverride = wrapContentWithConsoleOverride(content || '<h1>No content available</h1>');
+  const libraries = activeProject?.libraries || [];
+  const contentWithConsoleOverride = wrapContentWithConsoleOverride(content || '<h1>No content available</h1>', libraries);
 
   const windowHeight = Dimensions.get('window').height;
   const [webViewHeight, setWebViewHeight] = useState(windowHeight * 0.7);
@@ -71,7 +84,9 @@ const PreviewScreen = ({ route }) => {
         return Math.abs(gestureState.dy) > 5;
       },
       onPanResponderMove: (_, gestureState) => {
-        let newWebViewHeight = webViewHeight + gestureState.dy * -1;
+        // Remove the -1 multiplier to fix the drag direction
+        let newWebViewHeight = webViewHeight + gestureState.dy;
+
         if (newWebViewHeight < 100) {
           newWebViewHeight = 100;
         } else if (newWebViewHeight > windowHeight - 100) {
@@ -82,9 +97,20 @@ const PreviewScreen = ({ route }) => {
     })
   ).current;
 
+  // Set a navigation header button to toggle the console
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => setShowConsole(prev => !prev)} style={styles.headerButton}>
+          <Icon name="terminal" size={16} color={showConsole ? 'red' : 'lightblue'} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, showConsole]);
+
   return (
     <View style={styles.container}>
-      <View style={{ height: webViewHeight }}>
+      <View style={{ height: showConsole ? webViewHeight : '100%' }}>
         <WebView
           source={{ html: contentWithConsoleOverride }}
           style={styles.webview}
@@ -93,80 +119,37 @@ const PreviewScreen = ({ route }) => {
           originWhitelist={['*']}
         />
       </View>
-      <View {...panResponder.panHandlers} style={styles.draggableBar}>
-        <View style={styles.barIndicator} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <View style={styles.consoleContainer}>
-          <Text style={styles.consoleTitle}>Console Output:</Text>
-          <ScrollView style={styles.consoleScrollView} ref={scrollViewRef}>
-            {consoleMessages.map((msg, index) => (
-              <Text
-                key={index}
-                style={[
-                  styles.consoleText,
-                  msg.type === 'error'
-                    ? styles.errorText
-                    : msg.type === 'warn'
-                    ? styles.warnText
-                    : styles.logText,
-                ]}
-              >
-                {msg.message}
-              </Text>
-            ))}
-          </ScrollView>
-        </View>
-      </View>
+      {showConsole && (
+        <>
+          <View {...panResponder.panHandlers} style={styles.draggableBar}>
+            <View style={styles.barIndicator} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.consoleContainer}>
+              <Text style={styles.consoleTitle}>Console Output:</Text>
+              <ScrollView style={styles.consoleScrollView} ref={scrollViewRef}>
+                {consoleMessages.map((msg, index) => (
+                  <Text
+                    key={index}
+                    style={[
+                      styles.consoleText,
+                      msg.type === 'error'
+                        ? styles.errorText
+                        : msg.type === 'warn'
+                        ? styles.warnText
+                        : styles.logText,
+                    ]}
+                  >
+                    {msg.message}
+                  </Text>
+                ))}
+              </ScrollView>
+            </View>
+          </View>
+        </>
+      )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#222222',
-  },
-  webview: {
-    flex: 1,
-  },
-  draggableBar: {
-    height: 20,
-    backgroundColor: '#444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  barIndicator: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#888',
-    borderRadius: 2,
-  },
-  consoleContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-    padding: 10,
-  },
-  consoleTitle: {
-    color: '#fff',
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  consoleScrollView: {
-    flex: 1,
-  },
-  consoleText: {
-    fontSize: 12,
-  },
-  logText: {
-    color: '#ffffff',
-  },
-  warnText: {
-    color: '#ffae42',
-  },
-  errorText: {
-    color: '#ff4c4c',
-  },
-});
 
 export default PreviewScreen;

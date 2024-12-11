@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   FlatList,
   Modal,
@@ -7,28 +7,39 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  SafeAreaView,
+  KeyboardAvoidingView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
-import { addProject } from '../redux/projectsSlice';
+import { addProject, setActiveProject } from '../redux/projectsSlice';
 import { saveVersion } from '../redux/saveSlice';
-import { SafeAreaView } from 'react-native-safe-area-context'; // SafeAreaView for iOS
+import ProjectItem from '../components/ProjectItem';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const DashboardScreen = () => {
-  const navigation = useNavigation();
   const dispatch = useDispatch();
   const projects = useSelector((state) => state.projects.projects);
 
+  const navigation = useNavigation();
+  const route = useRoute();
   const [modalVisible, setModalVisible] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
+
+  useEffect(() => {
+    if (route.params?.showAddModal) {
+      setModalVisible(true);
+      navigation.setParams({ showAddModal: false }); // Reset param
+    }
+  }, [route.params?.showAddModal]);
 
   const handleCreateProject = () => {
     if (newProjectName.trim()) {
       const newProject = {
-        id: Date.now().toString(), // Unique ID as string
+        id: Date.now().toString(),
         name: newProjectName.trim(),
       };
       dispatch(addProject(newProject));
+
       // Save initial version
       const initialContent = {
         projectId: newProject.id,
@@ -43,40 +54,29 @@ const DashboardScreen = () => {
     }
   };
 
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.item}
-      onPress={() => navigation.navigate('Editor', { projectName: item.name })}>
-      <Text style={styles.title}>{item.name}</Text>
-    </TouchableOpacity>
+  const renderHeader = () => (
+    <Text style={styles.header}>Recent</Text>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Dashboard</Text>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => setModalVisible(true)}>
-          <Text style={styles.addButtonText}>+ Add</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* Project List */}
       <FlatList
         data={projects}
-        renderItem={renderItem}
+        renderItem={({ item }) => <ProjectItem item={item} />}
         keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderHeader}
+        contentContainerStyle={{ paddingHorizontal: 6 }}
       />
 
       {/* New Project Modal */}
       <Modal
         visible={modalVisible}
-        animationType="slide"
+        animationType="fade"
         transparent
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Create New Project</Text>
             <TextInput
@@ -89,17 +89,19 @@ const DashboardScreen = () => {
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelButton}
-                onPress={() => setModalVisible(false)}>
+                onPress={() => setModalVisible(false)}
+              >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.createButton}
-                onPress={handleCreateProject}>
+                onPress={handleCreateProject}
+              >
                 <Text style={styles.createButtonText}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -108,30 +110,15 @@ const DashboardScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#222',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: 'lightblue',
+    opacity: 0.5,
     paddingHorizontal: 16,
-    paddingTop: 10, // Add padding to avoid overlap
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  addButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 4,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    paddingVertical: 20,
   },
   item: {
     backgroundColor: '#fff',

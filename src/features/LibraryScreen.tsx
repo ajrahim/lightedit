@@ -1,46 +1,170 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
   FlatList,
-  StyleSheet,
 } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+import { searchLibraries } from '../infrastructures/libraryService';
+import {
+  saveLibrary,
+  removeLibrary,
+} from '../redux/librarySlice';
+import {
+  addLibrary,
+  removeLibrary as removeProjectLibrary,
+  selectActiveProject
+} from '../redux/projectsSlice';
+import Icon from 'react-native-vector-icons/FontAwesome6';
+import styles from '../styles/screens';
 
 const LibraryScreen = () => {
   const navigation = useNavigation();
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState('Connected');
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
-  const data = {
-    Connected: [{ id: '1', name: 'Connected Item 1' }, { id: '2', name: 'Connected Item 2' }],
-    Search: [{ id: '3', name: 'Search Result 1' }, { id: '4', name: 'Search Result 2' }],
-    Downloaded: [{ id: '5', name: 'Downloaded Item 1' }, { id: '6', name: 'Downloaded Item 2' }],
+  const downloadedLibraries = useSelector((state) => state.libraries.downloaded);
+  const activeProject = useSelector(selectActiveProject);
+
+  const getActiveTabData = () => {
+    if (activeTab === 'Connected') {
+      return activeProject.libraries || [];
+    }
+    if (activeTab === 'Search') {
+      return searchResults;
+    }
+    if (activeTab === 'Downloaded') {
+      return downloadedLibraries;
+    }
+    return [];
+  };
+
+  const handleSaveLibrary = async (library) => {
+    try {
+      // Fetch the source code from the URL
+      const response = await fetch(library.source);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch code from ${library.source}`);
+      }
+      const code = await response.text(); // Get the code as text
+  
+      // Create the library object with the code key
+      const libraryWithCode = {
+        ...library,
+        code, // Add fetched code
+      };
+  
+      // Save globally to librarySlice
+      dispatch(saveLibrary(libraryWithCode));
+  
+      // Save to the active project's libraries if activeProject exists
+      if (activeProject) {
+        dispatch(
+          addLibrary({
+            projectId: activeProject.id,
+            library: libraryWithCode,
+          })
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching library code:', error);
+    }
+  };
+
+  const handleRemoveLibrary = (name) => {
+    dispatch(removeLibrary(name)); // Remove globally from librarySlice
+    if (activeProject) {
+      dispatch(
+        removeProjectLibrary({
+          projectId: activeProject.id,
+          libraryName: name,
+        })
+      );
+    }
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.listItem}>
-      <Text style={styles.itemText}>{item.name}</Text>
+      <View style={styles.listContentTop}>
+        <View style={styles.listContent}>
+          <Text style={styles.itemTitle}>{item.name}</Text>
+          <Text style={styles.itemDescription}>{item.description}</Text>
+        </View>
+        <View style={styles.listActions}>
+          {activeTab === 'Search' && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleSaveLibrary(item)}
+            >
+              <Text style={styles.actionText}>Save</Text>
+            </TouchableOpacity>
+          )}
+          {activeTab !== 'Search' && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => handleRemoveLibrary(item.name)}
+            >
+              <Text style={styles.actionText}>Remove</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+      <View style={styles.listContentBottom}>
+        <Text style={styles.itemRepo}>{item.repo}</Text>
+      </View>
     </View>
   );
 
+  const handleSearch = async () => {
+    if (searchQuery.trim() === '') {
+      setSearchResults([]);
+      return;
+    }
+
+    setActiveTab('Search');
+
+    try {
+      const results = await searchLibraries(searchQuery); // Call the search API
+      console.log('Search Results:', results);
+      setSearchResults(results.libraries || []);
+    } catch (error) {
+      console.error('Error searching libraries:', error);
+    }
+  };
+
+  useEffect(() => {
+    console.log('Active Tab:', activeTab);
+    console.log('Search Results:', searchResults);
+  }, [activeTab, searchResults]);
+
+  useEffect(() => {
+    if (activeTab === 'Search' && searchQuery.trim() !== '') {
+      handleSearch();
+    }
+  }, [activeTab]);
+
   return (
     <View style={styles.container}>
-      {/* Title Bar */}
-
       {/* Search Bar */}
       <View style={styles.searchBarContainer}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Search..."
+          placeholder="Search libraries..."
           placeholderTextColor="#aaa"
           value={searchQuery}
           onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearch}
         />
+        <TouchableOpacity style={styles.searchIcon} onPress={handleSearch}>
+          <Icon name="magnifying-glass" size={16} color="lightblue" />
+        </TouchableOpacity>
       </View>
-      
+
       {/* Tabs */}
       <View style={styles.tabContainer}>
         {['Connected', 'Search', 'Downloaded'].map((tab) => (
@@ -50,90 +174,23 @@ const LibraryScreen = () => {
             onPress={() => setActiveTab(tab)}
           >
             <Text
-              style={[styles.tabButtonText, activeTab === tab && styles.activeTabText]}
+              style={[styles.tabButtonText, activeTab === tab && styles.activeTabButtonText]}
             >
-              {tab}
+              {tab.toUpperCase()}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-
       {/* Main Content */}
       <FlatList
-        data={data[activeTab].filter((item) =>
-          item.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )}
+        data={getActiveTabData()}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.name || item.id || index.toString()} // Ensure unique keys
         contentContainerStyle={styles.listContainer}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9f9f9',
-  },
-  titleBar: {
-    padding: 16,
-    backgroundColor: '#6200EE',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#eee',
-    paddingVertical: 8,
-  },
-  tabButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-  },
-  activeTab: {
-    backgroundColor: '#6200EE',
-  },
-  tabButtonText: {
-    fontSize: 16,
-    color: '#000',
-  },
-  activeTabText: {
-    color: '#fff',
-  },
-  searchBarContainer: {
-    padding: 8,
-    backgroundColor: '#fff',
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 8,
-    fontSize: 16,
-    backgroundColor: '#fff',
-  },
-  listContainer: {
-    padding: 16,
-  },
-  listItem: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    borderRadius: 5,
-    marginBottom: 8,
-  },
-  itemText: {
-    fontSize: 16,
-    color: '#333',
-  },
-});
 
 export default LibraryScreen;

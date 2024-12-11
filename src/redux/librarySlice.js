@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  downloaded: [], // Array of saved libraries
+  downloaded: [],
 };
 
 const librarySlice = createSlice({
@@ -13,15 +13,15 @@ const librarySlice = createSlice({
       state.downloaded.push(library);
     },
     removeLibrary: (state, action) => {
-      const libraryId = action.payload;
-      state.downloaded = state.downloaded.filter((library) => library.id !== libraryId);
+      const name = action.payload;
+      state.downloaded = state.downloaded.filter((library) => library.name !== name);
     },
   },
 });
 
 export const { saveLibrary, removeLibrary } = librarySlice.actions;
-export const selectAllLibraries = (state) => state.libraries.downloaded;
-export const selectLibraryById = (libraryId) => (state) =>
-  state.libraries.downloaded.find((library) => library.id === libraryId);
+export const selectLibraries = (state) => state.libraries.downloaded;
+export const selectLibrary = (name) => (state) =>
+  state.libraries.downloaded.find((library) => library.name === name);
 
 export default librarySlice.reducer;

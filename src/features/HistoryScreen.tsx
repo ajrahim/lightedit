@@ -3,15 +3,13 @@ import { StyleSheet, Text, TouchableOpacity, View, FlatList } from 'react-native
 import { useNavigation } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import { selectVersionsByProjectId } from '../redux/saveSlice';
+import Icon from 'react-native-vector-icons/FontAwesome6';
+import styles from '../styles/screens';
 
 const HistoryScreen = ({ route }) => {
   const navigation = useNavigation();
-  const { projectId, onRestoreVersion } = route.params || {};
-  
-  // Retrieve the history of saves for the given projectId
+  const { projectId, onRestoreVersion, currentVersionTimestamp } = route.params || {};
   const history = useSelector(selectVersionsByProjectId(projectId));
-
-  // Reverse the history array to show newest to oldest
   const reversedHistory = [...history].reverse();
 
   const handleRestoreVersion = (version) => {
@@ -21,22 +19,58 @@ const HistoryScreen = ({ route }) => {
     navigation.goBack();
   };
 
+  const isCurrentVersion = (timestamp) => {
+    return currentVersionTimestamp && (new Date(timestamp).toISOString() === currentVersionTimestamp);
+  };
+
+  const formatDate = (timestamp) => {
+    const dateObject = new Date(timestamp);
+
+    // Format date as "December 5, 2020"
+    const dateOptions = { month: 'long', day: 'numeric', year: 'numeric' };
+    const dateString = new Intl.DateTimeFormat('en-US', dateOptions).format(dateObject);
+
+    // Format time as "5:30 PM"
+    const timeOptions = { hour: 'numeric', minute: 'numeric' };
+    const timeString = new Intl.DateTimeFormat('en-US', timeOptions).format(dateObject);
+
+    return `${dateString} @ ${timeString}`;
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, styles.containerMargins]}>
       <FlatList
         data={reversedHistory}
         keyExtractor={(item, index) => `${item.timestamp}-${index}`}
         renderItem={({ item, index }) => {
-          // Calculate display index from highest to lowest
           const displayIndex = reversedHistory.length - index;
+          const isFirstItem = index === 0;
+          const isLastItem = index === reversedHistory.length - 1;
+          const current = isCurrentVersion(item.timestamp);
+          const formattedDate = formatDate(item.timestamp);
+
           return (
             <TouchableOpacity
               style={styles.historyItem}
               onPress={() => handleRestoreVersion(item)}
             >
-              <Text style={styles.historyText}>
-                {`#${displayIndex}: ${new Date(item.timestamp).toLocaleString()}`}
-              </Text>
+              <View style={styles.historyLineContainer}>
+                <View
+                  style={[
+                    styles.historyLine,
+                    isFirstItem && styles.historyLineFirst,
+                    isLastItem && styles.historyLineLast,
+                  ]}
+                />
+                <View style={styles.historyCircle} />
+              </View>
+              <View style={styles.historyContent}>
+                <Text style={styles.historyVersion}>{displayIndex}</Text>
+                  <Text style={styles.historyText}>{formattedDate}</Text>
+                  {current && (
+                    <Icon name="check" size={12} color="green" style={styles.currentCheck} />
+                  )}
+              </View>
             </TouchableOpacity>
           );
         }}
@@ -44,23 +78,5 @@ const HistoryScreen = ({ route }) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    padding: 20,
-  },
-  historyItem: {
-    padding: 10,
-    marginBottom: 8,
-    backgroundColor: '#ddd',
-    borderRadius: 4,
-  },
-  historyText: {
-    fontSize: 14,
-    color: '#333',
-  },
-});
 
 export default HistoryScreen;
