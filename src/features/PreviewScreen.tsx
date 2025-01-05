@@ -1,10 +1,41 @@
+/**
+ * Copyright (c) 2024 Yousef Ibrahimkhil & AJ Rahim
+ *
+ * All rights reserved. Unauthorized copying of this file, via any medium, is strictly prohibited.
+ * Proprietary and confidential.
+ *
+ * Written by Yousef Ibrahimkhil & AJ Rahim, 2024.
+ */
+
+// ========================================================
+// === Start of Imports ===================================
+// ========================================================
+
+// React Native
 import React, { useState, useRef, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, ScrollView, Dimensions, PanResponder, TouchableOpacity } from 'react-native';
+import {
+  Text,
+  View,
+  ScrollView,
+  Dimensions,
+  PanResponder,
+  TouchableOpacity,
+} from 'react-native';
+
+// Additional Libraries
 import { WebView } from 'react-native-webview';
 import { useSelector } from 'react-redux';
+
+// Redux Actions & Selectors
 import { selectActiveProject } from '../redux/projectsSlice';
-import Icon from 'react-native-vector-icons/FontAwesome6';
+
+// Styles, Colors, & Icons
 import styles from '../styles/screens';
+import Icon from 'react-native-vector-icons/FontAwesome6';
+
+// ========================================================
+// === Start of Code ======================================
+// ========================================================
 
 const PreviewScreen = ({ route, navigation }) => {
   const { content } = route.params || {};
@@ -69,11 +100,17 @@ const PreviewScreen = ({ route, navigation }) => {
       </script>
     `;
 
-    return htmlContent.replace(/<head>/i, `<head>${consoleOverrideScript}\n${libraryScripts}`);
+    return htmlContent.replace(
+      /<head>/i,
+      `<head>${consoleOverrideScript}\n${libraryScripts}`,
+    );
   };
 
   const libraries = activeProject?.libraries || [];
-  const contentWithConsoleOverride = wrapContentWithConsoleOverride(content || '<h1>No content available</h1>', libraries);
+  const contentWithConsoleOverride = wrapContentWithConsoleOverride(
+    content || '<h1>No content available</h1>',
+    libraries,
+  );
 
   const windowHeight = Dimensions.get('window').height;
   const [webViewHeight, setWebViewHeight] = useState(windowHeight * 0.7);
@@ -94,15 +131,22 @@ const PreviewScreen = ({ route, navigation }) => {
         }
         setWebViewHeight(newWebViewHeight);
       },
-    })
+    }),
   ).current;
 
   // Set a navigation header button to toggle the console
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={() => setShowConsole(prev => !prev)} style={styles.headerButton}>
-          <Icon name="terminal" size={16} color={showConsole ? 'red' : 'lightblue'} />
+        <TouchableOpacity
+          onPress={() => setShowConsole((prev) => !prev)}
+          style={styles.headerButton}
+        >
+          <Icon
+            name="terminal"
+            size={16}
+            color={showConsole ? 'red' : 'lightblue'}
+          />
         </TouchableOpacity>
       ),
     });

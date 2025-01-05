@@ -15,7 +15,11 @@ const ProjectItem = ({ item }) => {
   };
 
   return (
-    <TouchableOpacity style={styles.item} onPress={handlePress}>
+    <TouchableOpacity
+      activeOpacity={1}
+      style={styles.item}
+      onPress={handlePress}
+    >
       <View style={styles.itemAvatar}>
         {/* <Text style={styles.avatarText}>
           {item.name.charAt(0).toUpperCase()}
@@ -24,7 +28,9 @@ const ProjectItem = ({ item }) => {
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.title}>{item.name}</Text>
-        <Text style={styles.modified}>Last Modified: December 8th, 9:13 PM</Text>
+        <Text style={styles.modified}>
+          Last Modified: December 8th, 9:13 PM
+        </Text>
       </View>
       <View style={styles.itemArrow}>
         <Icon name="chevron-right" size={16} color="lightblue" />
@@ -35,12 +41,11 @@ const ProjectItem = ({ item }) => {
 
 const styles = StyleSheet.create({
   item: {
-    paddingVertical: 10,
-    marginBottom: 8,
-    marginHorizontal: 16,
-    elevation: 2,
+    height: 70,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#222',
   },
   itemAvatar: {
     width: 40,
@@ -72,7 +77,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '400',
     color: 'lightblue',
-    opacity: 0.5
+    opacity: 0.5,
   },
 });
 

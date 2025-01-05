@@ -2,7 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
   projects: [], // Array of projects
-  activeProject: null, // Currently active project ID
+  activeProject: null, // The ID of the active project
 };
 
 const projectsSlice = createSlice({
@@ -17,13 +17,17 @@ const projectsSlice = createSlice({
     },
     addLibrary: (state, action) => {
       const { projectId, library } = action.payload;
-      const project = state.projects.find((project) => project.id === projectId);
+      const project = state.projects.find(
+        (project) => project.id === projectId,
+      );
       if (project) {
         // Ensure the libraries key exists
         if (!project.libraries) {
           project.libraries = [];
         }
-        const existingLibrary = project.libraries.find((lib) => lib.name === library.name);
+        const existingLibrary = project.libraries.find(
+          (lib) => lib.name === library.name,
+        );
         if (existingLibrary) {
           // Update the library if the version doesn't match
           if (existingLibrary.version !== library.version) {
@@ -39,14 +43,20 @@ const projectsSlice = createSlice({
     },
     removeLibrary: (state, action) => {
       const { projectId, libraryName } = action.payload;
-      const project = state.projects.find((project) => project.id === projectId);
+      const project = state.projects.find(
+        (project) => project.id === projectId,
+      );
       if (project && project.libraries) {
-        project.libraries = project.libraries.filter((lib) => lib.name !== libraryName);
+        project.libraries = project.libraries.filter(
+          (lib) => lib.name !== libraryName,
+        );
       }
     },
     setActiveProject: (state, action) => {
       const { projectId } = action.payload;
-      const projectExists = state.projects.find((project) => project.id === projectId);
+      const projectExists = state.projects.find(
+        (project) => project.id === projectId,
+      );
       if (projectExists) {
         state.activeProject = projectId;
       }
@@ -54,15 +64,43 @@ const projectsSlice = createSlice({
     clearActiveProject: (state) => {
       state.activeProject = null;
     },
+    deleteProject: (state, action) => {
+      const { projectId } = action.payload;
+      state.projects = state.projects.filter(
+        (project) => project.id !== projectId,
+      );
+      if (state.activeProject === projectId) {
+        state.activeProject = null; // Clear active project if it's deleted
+      }
+    },
+    renameProject: (state, action) => {
+      const { projectId, name } = action.payload;
+      const project = state.projects.find(
+        (project) => project.id === projectId,
+      );
+      if (project) {
+        project.name = name;
+      }
+    },
   },
 });
 
 export const selectProject = (id) => (state) =>
-state.projects.find((project) => project.id === id);
+  state.projects.find((project) => project.id === id);
 
 export const selectActiveProject = (state) =>
-state.projects.projects.find((project) => project.id === state.projects.activeProject);
+  state.projects.projects.find(
+    (project) => project.id === state.projects.activeProject,
+  );
 
+export const {
+  addProject,
+  addLibrary,
+  removeLibrary,
+  setActiveProject,
+  clearActiveProject,
+  deleteProject,
+  renameProject,
+} = projectsSlice.actions;
 
-export const { addProject, addLibrary, removeLibrary, setActiveProject, clearActiveProject } = projectsSlice.actions;
 export default projectsSlice.reducer;

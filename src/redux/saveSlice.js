@@ -1,7 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { createSelector } from 'reselect';
 
 const initialState = {
-  saves: [], // Array of saves
+  saves: [],
 };
 
 const saveSlice = createSlice({
@@ -10,22 +11,38 @@ const saveSlice = createSlice({
   reducers: {
     saveVersion: (state, action) => {
       const { projectId, html, css, js, timestamp } = action.payload;
-      state.saves.push({ projectId, html, css, js, timestamp });
+      state.saves.push({ projectId, html, css, js, timestamp, notes: '' });
+    },
+    updateNotes: (state, action) => {
+      const { projectId, timestamp, notes } = action.payload;
+      const save = state.saves.find(
+        (s) => s.projectId === projectId && s.timestamp === timestamp,
+      );
+      if (save) {
+        save.notes = notes;
+      }
     },
   },
 });
 
-export const { saveVersion } = saveSlice.actions;
+export const { saveVersion, updateNotes } = saveSlice.actions;
 
-export const selectVersionsByProjectId = (projectId) => (state) => {
-  return state.saves.saves.filter((save) => save.projectId === projectId);
-};
+// Memoized selector to filter versions by project ID
+export const selectVersionsByProjectId = (projectId) =>
+  createSelector(
+    (state) => state.saves.saves,
+    (saves) => saves.filter((save) => save.projectId === projectId),
+  );
 
-export const selectLatestVersionByProjectId = (projectId) => (state) => {
-  const projectSaves = state.saves.saves.filter((save) => save.projectId === projectId);
-  if (projectSaves.length === 0) return null;
-  projectSaves.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-  return projectSaves[0];
-};
+// Memoized selector to get the latest version by project ID
+export const selectLatestVersionByProjectId = (projectId) =>
+  createSelector(selectVersionsByProjectId(projectId), (projectSaves) => {
+    if (projectSaves.length === 0) return null;
+    return projectSaves.reduce((latest, current) =>
+      new Date(latest.timestamp) > new Date(current.timestamp)
+        ? latest
+        : current,
+    );
+  });
 
 export default saveSlice.reducer;

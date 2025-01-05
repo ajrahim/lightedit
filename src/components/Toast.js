@@ -26,7 +26,7 @@ export const renderToast = (toastOptions) => {
   );
 };
 
-// Define preset options for each toast type for convenience
+// Types of toasts: general, success, failed
 export const toastOptions = {
   general: {
     type: 'general',

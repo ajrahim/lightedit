@@ -1,8 +1,9 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import DashboardStack from './DashboardStack';
 import SettingsScreen from '../features/SettingsScreen';
-import Icon from 'react-native-vector-icons/FontAwesome6'; // Import the icons library
+import DashboardScreen from '../features/DashboardScreen';
+import ModelsScreen from '../features/ModelsScreen';
+import Icon from 'react-native-vector-icons/FontAwesome6';
 
 const Tab = createBottomTabNavigator();
 
@@ -22,8 +23,8 @@ const TabNavigator = () => {
       }}
     >
       <Tab.Screen
-        name="DashboardStack"
-        component={DashboardStack}
+        name="Dashboard"
+        component={DashboardScreen}
         options={{
           headerShown: false,
           tabBarLabel: 'Dashboard',
@@ -34,7 +35,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="Models"
-        component={SettingsScreen}
+        component={ModelsScreen}
         options={{
           tabBarLabel: 'Models',
           tabBarIcon: ({ color, size }) => (

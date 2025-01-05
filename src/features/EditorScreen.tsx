@@ -11,7 +11,7 @@ import {
 } from '../redux/saveSlice';
 import { selectActiveProject } from '../redux/projectsSlice';
 import { useNavigation } from '@react-navigation/native';
-import { useHeaderHeight } from '@react-navigation/elements'
+import { useHeaderHeight } from '@react-navigation/elements';
 import {
   Text,
   TouchableOpacity,
@@ -22,7 +22,8 @@ import {
   Platform,
   Keyboard,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
+  Share,
 } from 'react-native';
 import { queryLogic } from '../infrastructures/logicService';
 import EditorControls from '../components/EditorControls';
@@ -31,27 +32,27 @@ import CodeEditor from '@rivascva/react-native-code-editor';
 import Icon from 'react-native-vector-icons/FontAwesome6';
 import styles from '../styles/screens';
 
-// Import js-beautify functions
 import { js as beautifyJS, html as beautifyHTML, css as beautifyCSS } from 'js-beautify';
-
-// Import the toast hook
 import { useToast } from 'react-native-toast-notifications';
+
+// File and zip handling
+import RNFS from 'react-native-fs';
+import { zip } from 'react-native-zip-archive';
 
 const EditorContext = createContext(null);
 
 const EditorScreen = ({ route }) => {
   const dispatch = useDispatch();
-  const height = useHeaderHeight()
+  const height = useHeaderHeight();
   const navigation = useNavigation();
   const toast = useToast();
   const { projectName } = route?.params || {};
   const project = useSelector(selectActiveProject);
-
-  const [editorLanguage, setEditorLanguage] = useState('html');
   const latestVersion = useSelector(
     selectLatestVersionByProjectId(project?.id)
   );
 
+  const [editorLanguage, setEditorLanguage] = useState('html');
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('HTML');
   const [content, setContent] = useState({
@@ -98,9 +99,9 @@ const EditorScreen = ({ route }) => {
         <View style={{ flexDirection: 'row'}}>
           <TouchableOpacity
             style={{ marginRight: 30 }}
-            onPress={() => setHelpVisible(true)}
+            onPress={handleExportZip} // Changed to our new export handler
           >
-            <Icon name="download" size={16} color="#777" />
+            <Icon name="download" size={16} color="navajowhite" />
           </TouchableOpacity>
           <TouchableOpacity
             style={{ marginRight: 10 }}
@@ -111,7 +112,7 @@ const EditorScreen = ({ route }) => {
         </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, content]);
 
   // Dynamically set the editor language based on active tab
   useEffect(() => {
@@ -125,7 +126,6 @@ const EditorScreen = ({ route }) => {
   }, [activeTab]);
 
   const handleInsertText = (text) => {
-    // Append the clicked character to the current tab's content
     setContent((prevContent) => ({
       ...prevContent,
       [activeTab.toLowerCase()]: prevContent[activeTab.toLowerCase()] + text,
@@ -240,16 +240,11 @@ const EditorScreen = ({ route }) => {
     }
   };
 
-  if (!project) {
-    return <Text>Project not found</Text>;
-  }
-
-  // Define character sets for each language
+  // Character sets for each tab
   const htmlChars = ['<', '>', '/', '=', '"', "'", '(', ')', '{', '}', '!'];
   const cssChars = ['{', '}', ':', ';', '#', '.', '%', '!', '@import ', '@media ', '/*  */'];
   const jsChars = ['(', ')', '{', '}', '[', ']', '=', '=>', ';', '.', ',', '"', "'"];
 
-  // Determine which characters to show based on the active tab
   let currentChars;
   if (activeTab === 'HTML') {
     currentChars = htmlChars;
@@ -257,6 +252,53 @@ const EditorScreen = ({ route }) => {
     currentChars = cssChars;
   } else if (activeTab === 'JS') {
     currentChars = jsChars;
+  }
+
+  // Handle exporting as zip
+  const handleExportZip = async () => {
+    try {
+      // Create a temporary directory for exporting
+      const exportDir = RNFS.DocumentDirectoryPath + '/export_temp';
+      const htmlFile = exportDir + '/index.html';
+      const cssFile = exportDir + '/styles.css';
+      const jsFile = exportDir + '/script.js';
+
+      // Ensure directory exists
+      const dirExists = await RNFS.exists(exportDir);
+      if (!dirExists) {
+        await RNFS.mkdir(exportDir);
+      }
+
+      // Write files
+      await RNFS.writeFile(htmlFile, content.html, 'utf8');
+      await RNFS.writeFile(cssFile, content.css, 'utf8');
+      await RNFS.writeFile(jsFile, content.js, 'utf8');
+
+      // Zip the directory
+      const targetPath = RNFS.DocumentDirectoryPath + '/project_export.zip';
+      if (await RNFS.exists(targetPath)) {
+        await RNFS.unlink(targetPath);
+      }
+
+      const zipPath = await zip(exportDir, targetPath);
+
+      // Optionally, share the zip file
+      await Share.share({
+        url: 'file://' + zipPath,
+        title: 'Project Export',
+        message: 'Here is the exported project zip file.'
+      });
+
+      toast.show('Project exported as ZIP!', toastOptions.success);
+
+    } catch (error) {
+      console.error('Error exporting zip:', error);
+      toast.show('Error exporting project. Please try again.', toastOptions.failed);
+    }
+  };
+
+  if (!project) {
+    return <Text>Project not found</Text>;
   }
 
   return (

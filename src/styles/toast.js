@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
   success: {
     backgroundColor: 'lightgreen',
   },
-  warning: { 
+  warning: {
     backgroundColor: 'lightcoral',
   },
   toastText: {

@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   container: {
@@ -139,9 +139,10 @@ export default StyleSheet.create({
   },
   keyboardOverlayProcessing: { alignItems: 'center', marginVertical: 50 },
   keyboardOverlayProcessingText: {
-    color: 'lightblue', marginTop: 10
+    color: 'lightblue',
+    marginTop: 10,
   },
-  keyboardOverlayResponse: { marginVertical: 20},
+  keyboardOverlayResponse: { marginVertical: 20 },
   keyboardOverlayResponseText: { color: 'lightblue' },
   keyboardOverlayButtonContainer: {
     flexDirection: 'row',
@@ -161,7 +162,7 @@ export default StyleSheet.create({
   footerContainer: {
     flexDirection: 'row',
     width: '100%',
-    height: 50
+    height: 50,
   },
   codeButtonContainer: {
     flexDirection: 'row',
@@ -179,7 +180,7 @@ export default StyleSheet.create({
   codeButtonClean: {
     backgroundColor: 'lightblue',
     marginHorizontal: 20,
-    borderRadius: 20
+    borderRadius: 20,
   },
   codeButtonText: {
     color: '#fff', // Text color
@@ -223,18 +224,18 @@ export default StyleSheet.create({
     display: 'flex',
     flexDirection: 'row',
     flex: 1,
-    width: '100%'
+    width: '100%',
   },
   listContentBottom: {
     display: 'flex',
     flex: 1,
     padding: 16,
-    width: '100%'
+    width: '100%',
   },
   listContent: {
     padding: 16,
     display: 'flex',
-    flex: 1
+    flex: 1,
   },
   listActions: {
     display: 'flex',
@@ -263,7 +264,7 @@ export default StyleSheet.create({
     borderRadius: 20,
     textAlign: 'center',
     alignItems: 'center',
-    width: 80
+    width: 80,
   },
   actionText: {
     color: '#111',
@@ -317,16 +318,18 @@ export default StyleSheet.create({
 
   // History Screen
   historyItem: {
-    marginHorizontal: 16,
+    paddingHorizontal: 16,
     flexDirection: 'row',
+    backgroundColor: '#222',
   },
   historyLineContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#222',
     width: 30,
   },
-  historyLine : {
+  historyLine: {
     width: 1,
     height: '100%',
     borderWidth: 0.5,
@@ -357,19 +360,29 @@ export default StyleSheet.create({
     marginVertical: 4,
     backgroundColor: '#333',
     borderWidth: 1,
-    borderColor: '#444',
+    borderColor: '#3c3c3c',
     borderRadius: 4,
+    flex: 1,
+  },
+  historyContentTop: {
     flex: 1,
     flexDirection: 'row',
     alignContent: 'center',
     alignItems: 'center',
   },
+  historyContentNotes: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 10,
+    marginLeft: 70,
+    fontStyle: 'italic',
+  },
   historyVersion: {
     fontSize: 12,
     width: 50,
     textAlign: 'center',
-    color: '#ccc',
-    backgroundColor: '#444',
+    color: '#999',
+    backgroundColor: '#3c3c3c',
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 20,
@@ -387,5 +400,11 @@ export default StyleSheet.create({
   currentItemHighlight: {
     backgroundColor: '#e0ffe0', // a light green to highlight current version
   },
-  currentCheck: { marginRight: 10, padding: 6, paddingHorizontal: 7, backgroundColor: 'lightgreen', borderRadius: 20 },
+  currentCheck: {
+    marginRight: 10,
+    padding: 6,
+    paddingHorizontal: 7,
+    backgroundColor: 'lightgreen',
+    borderRadius: 20,
+  },
 });

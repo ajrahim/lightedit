@@ -14,7 +14,9 @@ const librarySlice = createSlice({
     },
     removeLibrary: (state, action) => {
       const name = action.payload;
-      state.downloaded = state.downloaded.filter((library) => library.name !== name);
+      state.downloaded = state.downloaded.filter(
+        (library) => library.name !== name,
+      );
     },
   },
 });

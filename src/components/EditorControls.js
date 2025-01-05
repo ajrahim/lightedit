@@ -12,7 +12,7 @@ const EditorControls = ({
 }) => {
 
   const iconSize = 18;
-  const iconColor = "#777";
+  const iconColor = "lightblue";
 
   return (
     <View style={styles.navBar}>

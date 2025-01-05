@@ -1,3 +1,17 @@
+/**
+ * Copyright (c) 2024 Yousef Ibrahimkhil & AJ Rahim
+ *
+ * All rights reserved. Unauthorized copying of this file, via any medium, is strictly prohibited.
+ * Proprietary and confidential.
+ *
+ * Written by Yousef Ibrahimkhil & AJ Rahim, 2024.
+ */
+
+// ========================================================
+// === Start of Imports ===================================
+// ========================================================
+
+// React Native
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -6,20 +20,32 @@ import {
   TextInput,
   FlatList,
 } from 'react-native';
+
+// Additional Libraries
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
+
+// API Services
 import { searchLibraries } from '../infrastructures/libraryService';
-import {
-  saveLibrary,
-  removeLibrary,
-} from '../redux/librarySlice';
+
+// Redux Actions & Selectors
+import { saveLibrary, removeLibrary } from '../redux/librarySlice';
 import {
   addLibrary,
   removeLibrary as removeProjectLibrary,
-  selectActiveProject
+  selectActiveProject,
 } from '../redux/projectsSlice';
-import Icon from 'react-native-vector-icons/FontAwesome6';
+
+// Components
+import EmptyState from '../components/EmptyState';
+
+// Styles, Colors, & Icons
 import styles from '../styles/screens';
+import Icon from 'react-native-vector-icons/FontAwesome6';
+
+// ========================================================
+// === Start of Code ======================================
+// ========================================================
 
 const LibraryScreen = () => {
   const navigation = useNavigation();
@@ -28,7 +54,9 @@ const LibraryScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
 
-  const downloadedLibraries = useSelector((state) => state.libraries.downloaded);
+  const downloadedLibraries = useSelector(
+    (state) => state.libraries.downloaded,
+  );
   const activeProject = useSelector(selectActiveProject);
 
   const getActiveTabData = () => {
@@ -51,24 +79,25 @@ const LibraryScreen = () => {
       if (!response.ok) {
         throw new Error(`Failed to fetch code from ${library.source}`);
       }
-      const code = await response.text(); // Get the code as text
-  
+      // Get the code as text
+      const code = await response.text();
+
       // Create the library object with the code key
       const libraryWithCode = {
         ...library,
         code, // Add fetched code
       };
-  
+
       // Save globally to librarySlice
       dispatch(saveLibrary(libraryWithCode));
-  
+
       // Save to the active project's libraries if activeProject exists
       if (activeProject) {
         dispatch(
           addLibrary({
             projectId: activeProject.id,
             library: libraryWithCode,
-          })
+          }),
         );
       }
     } catch (error) {
@@ -83,7 +112,7 @@ const LibraryScreen = () => {
         removeProjectLibrary({
           projectId: activeProject.id,
           libraryName: name,
-        })
+        }),
       );
     }
   };
@@ -174,7 +203,10 @@ const LibraryScreen = () => {
             onPress={() => setActiveTab(tab)}
           >
             <Text
-              style={[styles.tabButtonText, activeTab === tab && styles.activeTabButtonText]}
+              style={[
+                styles.tabButtonText,
+                activeTab === tab && styles.activeTabButtonText,
+              ]}
             >
               {tab.toUpperCase()}
             </Text>
@@ -183,12 +215,33 @@ const LibraryScreen = () => {
       </View>
 
       {/* Main Content */}
-      <FlatList
-        data={getActiveTabData()}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => item.name || item.id || index.toString()} // Ensure unique keys
-        contentContainerStyle={styles.listContainer}
-      />
+      {getActiveTabData().length > 0 ? (
+        <FlatList
+          data={getActiveTabData()}
+          renderItem={renderItem}
+          keyExtractor={(item, index) =>
+            item.name || item.id || index.toString()
+          }
+          contentContainerStyle={styles.listContainer}
+        />
+      ) : (
+        <>
+          {activeTab === 'Connected' && (
+            <EmptyState
+              icon="plug-circle-plus"
+              titleText="Connected Libraries"
+            />
+          )}
+
+          {activeTab === 'Search' && (
+            <EmptyState icon="satellite" titleText="Search for a Library" />
+          )}
+
+          {activeTab === 'Downloaded' && (
+            <EmptyState icon="vault" titleText="Downloaded Libraries" />
+          )}
+        </>
+      )}
     </View>
   );
 };

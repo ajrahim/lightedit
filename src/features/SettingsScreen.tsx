@@ -1,5 +1,12 @@
 import React, { useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Linking, SafeAreaView } from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Linking,
+  SafeAreaView,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const SettingsScreen = () => {

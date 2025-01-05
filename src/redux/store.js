@@ -1,11 +1,20 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { combineReducers } from 'redux';
-import { persistStore, persistReducer } from 'redux-persist';
+import {
+  FLUSH,
+  REHYDRATE,
+  PAUSE,
+  PERSIST,
+  PURGE,
+  REGISTER,
+  persistStore,
+  persistReducer,
+} from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import projectsReducer from './projectsSlice';
 import libraryReducer from './librarySlice';
 import saveReducer from './saveSlice';
-import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from 'redux-persist';
+import modelsReducer from './modelsSlice';
 
 const persistConfig = {
   key: 'root',
@@ -16,6 +25,7 @@ const rootReducer = combineReducers({
   projects: projectsReducer,
   saves: saveReducer,
   libraries: libraryReducer,
+  models: modelsReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

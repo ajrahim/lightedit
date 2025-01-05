@@ -7,6 +7,8 @@ import PreviewScreen from '../features/PreviewScreen';
 import LibraryScreen from '../features/LibraryScreen';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome6';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native'; // Import here
+import { View } from 'react-native-reanimated/lib/typescript/Animated';
 
 const RootStack = createNativeStackNavigator();
 
@@ -20,47 +22,54 @@ const RootNavigator = () => {
       }}
     >
       <RootStack.Screen
-        name="Dashboard"
+        name="Root"
         component={TabNavigator}
         options={({ navigation, route }) => {
-          const activeTab =
-            route.state?.routes[route.state.index]?.name || 'Dashboard';
-
-          // Dynamic title and header customization based on active tab
-          const headerTitle = activeTab === 'Feed'
-            ? 'Your Feed'
-            : activeTab === 'Bookmarks'
-            ? 'Saved Articles'
-            : activeTab === 'Settings'
-            ? 'Settings'
-            : 'Dashboard';
-
-          const showAddButton = activeTab === 'Dashboard';
+          const active = getFocusedRouteNameFromRoute(route) ?? 'Dashboard';
 
           return {
             headerShown: true,
             headerLargeTitle: true,
             headerShadowVisible: false,
-            title: headerTitle,
+            title: active,
             headerRight: () =>
-              showAddButton ? (
+              active === 'Dashboard' ? (
                 <TouchableOpacity
                   style={styles.addButton}
                   onPress={() => {
-                    navigation.setParams({ showAddModal: true });
+                    navigation.navigate('Root', {
+                      screen: 'Dashboard',
+                      params: { showAddModal: true },
+                    });
                   }}
                 >
-                  <Icon name="plus" size={14} color="#222" />
+                  <Icon name="plus" size={13} color="#222" />
                   <Text style={styles.addButtonText}>New Project</Text>
                 </TouchableOpacity>
               ) : null,
           };
         }}
       />
-      <RootStack.Screen name="Editor" options={{headerShadowVisible: false}} component={EditorScreen} />
-      <RootStack.Screen name="History" component={HistoryScreen} />
-      <RootStack.Screen name="Preview" component={PreviewScreen} />
-      <RootStack.Screen name="Libraries" options={{headerShadowVisible: false}} component={LibraryScreen} />
+      <RootStack.Screen
+        name="Editor"
+        options={{ headerShadowVisible: false }}
+        component={EditorScreen}
+      />
+      <RootStack.Screen
+        name="History"
+        options={{ headerShadowVisible: false }}
+        component={HistoryScreen}
+      />
+      <RootStack.Screen
+        name="Preview"
+        options={{ headerShadowVisible: false }}
+        component={PreviewScreen}
+      />
+      <RootStack.Screen
+        name="Libraries"
+        options={{ headerShadowVisible: false }}
+        component={LibraryScreen}
+      />
     </RootStack.Navigator>
   );
 };
@@ -73,12 +82,15 @@ const styles = StyleSheet.create({
   addButton: {
     backgroundColor: 'lightblue',
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     borderRadius: 20,
     flexDirection: 'row',
+    alignContent: 'center',
+    alignItems: 'center',
   },
   addButtonText: {
     marginLeft: 8,
+    fontWeight: 500,
     color: '#222',
     fontSize: 14,
   },
